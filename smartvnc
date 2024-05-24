@@ -30,19 +30,29 @@ if [ "$all_commands_available" = false ]; then
     exit 1
 fi
 
-cleanup() {
-    echo "Initiating cleanup..."
-    kill $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
-    rm -f "$password_file" "$vnc_log"
-    ps -ef | grep $vnc_log | grep tail | awk '{print $2}' | xargs kill 2>/dev/null
-    echo "Cleanup complete."
-}
+show_help() {
+cat << EOF
+Usage: ${0##*/} [OPTIONS]
+Start a VNC and noVNC server with Openbox window manager.
 
-trap cleanup EXIT SIGINT SIGTERM
+    -d, --display NUMBER       Set the display number (default auto-detect)
+    -P, --password PASSWORD    Set the VNC password
+    -c, --startup COMMAND      Command to run after starting the session
+    -o, --openbox_config FILE  Specify the Openbox configuration file
+    -g, --geometry RESOLUTION  Set the resolution for the VNC session
+    -p, --http-port PORT       Set the HTTP port for noVNC (if empty, noVNC will not start)
+    -h, --help                 Display this help and exit
+    --auto-close               Enable auto-closing of the session
+EOF
+}
 
 # Parse named parameters
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
+        --help)
+            show_help
+            exit 0
+            ;;
         -d|--display)
             display_number="$2"
             echo "Display number set to: $display_number"
@@ -53,7 +63,7 @@ while [[ "$#" -gt 0 ]]; do
             echo "Auto-close enabled."
             shift
             ;;
-        -p|--password)
+        -P|--password)
             password="$2"
             echo "Password parameter updated."
             shift 2
@@ -73,7 +83,7 @@ while [[ "$#" -gt 0 ]]; do
             echo "Geometry set to: $geometry"
             shift 2
             ;;
-        -h|--http-port)
+        -p|--http-port)
             http_port="$2"
             echo "HTTP port set to: $http_port"
             shift 2
@@ -91,6 +101,16 @@ while [[ "$#" -gt 0 ]]; do
             ;;
     esac
 done
+
+cleanup() {
+    echo "Initiating cleanup..."
+    kill $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
+    rm -f "$password_file" "$vnc_log"
+    ps -ef | grep $vnc_log | grep tail | awk '{print $2}' | xargs kill 2>/dev/null
+    echo "Cleanup complete."
+}
+
+trap cleanup EXIT SIGINT SIGTERM
 
 # Validate parameters for missing arguments
 for param in password startup geometry http_port openbox_config; do
