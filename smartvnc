@@ -1,0 +1,163 @@
+#!/bin/bash
+
+# Default values for parameters
+display_number=""  # Initially empty, will auto-detect if not provided
+password="yourPassword"
+command=""
+geometry="1024x768"
+http_port=""  # Initially empty, noVNC server will not start if not provided
+openbox_config="/etc/xdg/openbox/rc.xml"
+auto_close=0
+
+echo "Starting the script with initial settings..."
+echo "Default command: $command, Geometry: $geometry, Openbox configuration: $openbox_config"
+
+cleanup() {
+    echo "Initiating cleanup..."
+    kill $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
+    rm -f "$password_file" "$vnc_log"
+    ps -ef | grep $vnc_log | grep tail | awk '{print $2}' | xargs kill 2>/dev/null
+    echo "Cleanup complete."
+}
+
+trap cleanup EXIT SIGINT SIGTERM
+
+# Parse named parameters
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -d|--display)
+            display_number="$2"
+            echo "Display number set to: $display_number"
+            shift 2
+            ;;
+        --auto-close)
+            auto_close=1
+            echo "Auto-close enabled."
+            shift
+            ;;
+        -p|--password)
+            password="$2"
+            echo "Password parameter updated."
+            shift 2
+            ;;
+        -c|--command)
+            command="$2"
+            echo "Command changed to: $command"
+            shift 2
+            ;;
+        -o|--openbox_config)
+            openbox_config="$2"
+            echo "Openbox configuration file set to: $openbox_config"
+            shift 2
+            ;;
+        -g|--geometry)
+            geometry="$2"
+            echo "Geometry set to: $geometry"
+            shift 2
+            ;;
+        -h|--http-port)
+            http_port="$2"
+            echo "HTTP port set to: $http_port"
+            shift 2
+            ;;
+        --) # End of all options
+            shift
+            break
+            ;;
+        -*)
+            echo "Error: Unknown option: $1" >&2
+            exit 1
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# Validate parameters for missing arguments
+for param in password command geometry http_port openbox_config; do
+    if [[ -z "${!param}" && "$param" != "http_port" ]]; then
+        echo "Error: Missing value for $param" >&2
+        exit 1
+    fi
+done
+
+# Auto-detect available display number
+if [[ -z "$display_number" ]]; then
+    echo "Auto-detecting available display number..."
+    for i in {1..99}; do
+        if [[ ! -e "/tmp/.X11-unix/X$i" ]]; then
+            display_number=":$i"
+            echo "Found available display number: $display_number"
+            break
+        fi
+    done
+fi
+
+if [[ -z "$display_number" ]]; then
+    echo "No available display number could be found."
+    exit 1
+fi
+
+# Create temporary password file
+password_file=$(mktemp /tmp/vncpasswd.XXXXXX)
+echo "VNC password file created at: $password_file"
+echo "$password" | vncpasswd -f > "$password_file"
+
+# Find a random available TCP port for RFB
+rfbport=0
+while [[ $rfbport -eq 0 ]]; do
+    rand_port=$(shuf -i 10000-65535 -n 1)
+    if [[ ! $(netstat -tuln | grep ":$rand_port ") ]]; then
+        rfbport=$rand_port
+        echo "Random available TCP port selected for RFB: $rfbport"
+    fi
+done
+
+vnc_log=$(mktemp /tmp/vnc_log.XXXXXX)
+echo "VNC log file created at: $vnc_log"
+
+# Start Xvnc server
+echo "Starting Xvnc server..."
+Xvnc "$display_number" -desktop desktop -geometry "$geometry" -rfbauth "$password_file" -rfbport "$rfbport" > "$vnc_log" 2> "$vnc_log" &
+xvnc_pid=$!
+echo "Xvnc PID: $xvnc_pid"
+
+# Start noVNC server if http_port is provided
+if [[ -n "$http_port" ]]; then
+    echo "Starting noVNC server..."
+    novnc --listen "$http_port" --vnc localhost:"$rfbport" > "$vnc_log" 2> "$vnc_log" &
+    novnc_pid=$!
+    echo "noVNC PID: $novnc_pid"
+
+    if [[ "$auto_close" -eq 1 ]]; then
+        (tail -f "$vnc_log" | while read -r line; do
+            if echo "$line" | grep -q "Connections: closed"; then
+                echo "Connection closed detected, terminating the script."
+                kill -SIGTERM $$
+            fi
+        done) &
+        monitor_pid=$!
+        echo "Monitor PID: $monitor_pid"
+    fi
+fi
+
+# Set DISPLAY environment variable
+export DISPLAY=$display_number
+echo "DISPLAY environment variable set to $DISPLAY"
+
+sleep 1
+echo "Starting Openbox window manager..."
+openbox --config-file "$openbox_config" &
+openbox_pid=$!
+echo "Openbox PID: $openbox_pid"
+
+# Execute the command
+echo "Executing command: $command"
+$command &
+cmd_pid=$!
+echo "Command PID: $cmd_pid"
+
+# Wait for the command to finish
+wait $cmd_pid
+echo "Command execution completed."
