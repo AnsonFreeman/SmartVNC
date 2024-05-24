@@ -44,7 +44,7 @@ To use SmartVNC, you may start the script with various options to control its be
 - `-d, --display <display_number>`: Set the display number for the VNC server.
 - `--auto-close`: Enable auto-closing of the VNC/noVNC servers when the main command finishes.
 - `-p, --password <password>`: Set a custom password for the VNC server.
-- `-c, --command <command>`: Specify a command to run within the VNC session.
+- `-c, --startup <command>`: Specify a command to run within the VNC session.
 - `-o, --openbox_config <path>`: Specify a path to an Openbox configuration file.
 - `-g, --geometry <geometry>`: Set the geometry of the VNC display (e.g., 1920x1080).
 - `-h, --http-port <port>`: Specify a port number for starting the noVNC server.
