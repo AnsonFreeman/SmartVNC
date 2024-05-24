@@ -57,7 +57,8 @@ Run a VNC server with a custom geometry and password:
 ./smartvnc -g 1920x1080 -p yourPassword -c 'firefox' --http-port 6080
 ```
 
-This command will start a VNC session running Firefox, accessible via a browser at `http://<server-ip>:6080/vnc_lite.html?password=yourPassword`.
+This command will start a VNC session running Firefox, accessible via a browser at 
+`http://<server-ip>:6080/vnc_lite.html?password=yourPassword`.
 
 ## Cleanup
 
