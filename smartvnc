@@ -36,10 +36,10 @@ Usage: ${0##*/} [OPTIONS]
 Start a VNC and noVNC server with Openbox window manager.
 
     -d, --display NUMBER       Set the display number (default auto-detect)
-    -P, --password PASSWORD    Set the VNC password
+    -P, --password PASSWORD    Set the VNC password, default: yourPassword
     -c, --startup COMMAND      Command to run after starting the session
-    -o, --openbox_config FILE  Specify the Openbox configuration file
-    -g, --geometry RESOLUTION  Set the resolution for the VNC session
+    -o, --openbox_config FILE  Specify the Openbox configuration file, default: /etc/xdg/openbox/rc.xml
+    -g, --geometry <W>x<H>     Set the resolution for the VNC session, default: 1024x768
     -p, --http-port PORT       Set the HTTP port for noVNC (if empty, noVNC will not start)
     -h, --help                 Display this help and exit
     --auto-close               Enable auto-closing of the session
