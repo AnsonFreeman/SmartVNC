@@ -9,8 +9,26 @@ http_port=""  # Initially empty, noVNC server will not start if not provided
 openbox_config="/etc/xdg/openbox/rc.xml"
 auto_close=0
 
-echo "Starting the script with initial settings..."
-echo "Default command: $command, Geometry: $geometry, Openbox configuration: $openbox_config"
+
+# Define an array with all commands to check
+commands=("netstat" "openbox" "novnc" "Xvnc" "vncpasswd")
+all_commands_available=true
+
+# Iterate through the array, checking each command
+for cmd in "${commands[@]}"; do
+    # Check if the command exists using `command -v`
+    if ! command -v $cmd &> /dev/null; then
+        # If the command does not exist, print an error message and update the status variable
+        echo "Error: '$cmd' is not available. Please ensure it is correctly installed."
+        all_commands_available=false
+    fi
+done
+
+# Check if all commands are available
+if [ "$all_commands_available" = false ]; then
+    echo "At least one required command is unavailable, the script will now exit."
+    exit 1
+fi
 
 cleanup() {
     echo "Initiating cleanup..."
@@ -40,9 +58,9 @@ while [[ "$#" -gt 0 ]]; do
             echo "Password parameter updated."
             shift 2
             ;;
-        -c|--command)
-            command="$2"
-            echo "Command changed to: $command"
+        -c|--startup)
+            startup="$2"
+            echo "Command changed to: $startup"
             shift 2
             ;;
         -o|--openbox_config)
@@ -75,7 +93,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Validate parameters for missing arguments
-for param in password command geometry http_port openbox_config; do
+for param in password startup geometry http_port openbox_config; do
     if [[ -z "${!param}" && "$param" != "http_port" ]]; then
         echo "Error: Missing value for $param" >&2
         exit 1
@@ -152,9 +170,9 @@ openbox --config-file "$openbox_config" &
 openbox_pid=$!
 echo "Openbox PID: $openbox_pid"
 
-# Execute the command
-echo "Executing command: $command"
-$command &
+# Execute the startup command
+echo "Executing command: $startup"
+$startup &
 cmd_pid=$!
 echo "Command PID: $cmd_pid"
 
