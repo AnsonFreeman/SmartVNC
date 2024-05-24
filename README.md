@@ -58,6 +58,7 @@ Run a VNC server with a custom geometry and password:
 ```
 
 This command will start a VNC session running Firefox, accessible via a browser at 
+<br>
 `http://<server-ip>:6080/vnc_lite.html?password=yourPassword`.
 
 ## Cleanup
