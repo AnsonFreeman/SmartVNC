@@ -20,7 +20,7 @@ Before you can run SmartVNC, you need to install the following dependencies on y
 
 ```bash
 sudo apt update
-sudo apt install tigervnc-standalone-server tigervnc-common x11vnc novnc openbox net-tools
+sudo apt install xorg xserver-xorg xvfb tigervnc-standalone-server tigervnc-common x11vnc novnc openbox net-tools
 
 ```
 
@@ -28,7 +28,7 @@ sudo apt install tigervnc-standalone-server tigervnc-common x11vnc novnc openbox
 
 ```bash
 sudo yum update
-sudo yum install tigervnc-server x11vnc novnc openbox net-tools
+sudo yum install xorg-x11-server-Xorg xorg-x11-server-Xvfb tigervnc-server x11vnc novnc openbox net-tools
 ```
 
 ## Usage
