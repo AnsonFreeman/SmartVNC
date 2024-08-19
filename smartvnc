@@ -104,7 +104,7 @@ done
 
 cleanup() {
     echo "Initiating cleanup..."
-    kill -9 $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
+    kill  $cmd_pid $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
     rm -f "$password_file" "$vnc_log"
     ps -ef | grep $vnc_log | grep tail | awk '{print $2}' | xargs kill 2>/dev/null
     echo "Cleanup complete."
