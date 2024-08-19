@@ -104,7 +104,7 @@ done
 
 cleanup() {
     echo "Initiating cleanup..."
-    kill $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
+    kill -9 $xvnc_pid $novnc_pid $openbox_pid $monitor_pid 2>/dev/null
     rm -f "$password_file" "$vnc_log"
     ps -ef | grep $vnc_log | grep tail | awk '{print $2}' | xargs kill 2>/dev/null
     echo "Cleanup complete."
@@ -177,6 +177,16 @@ if [[ -n "$http_port" ]]; then
         done) &
         monitor_pid=$!
         echo "Monitor PID: $monitor_pid"
+
+        (
+         sleep 120;
+         grep "Connections: accepted" "$vnc_log" |wc -l
+         if ! grep -q 'Connections: accepted' "$vnc_log"; then
+            echo "Connecting timeout."
+            kill -9 $cmd_pid
+            kill -SIGTERM $$
+         fi
+         ) &
     fi
 fi
 
