@@ -42,7 +42,7 @@ Start a VNC and noVNC server with Openbox window manager.
     -g, --geometry <W>x<H>     Set the resolution for the VNC session, default: 1024x768
     -p, --http-port PORT       Set the HTTP port for noVNC (if empty, noVNC will not start)
     -h, --help                 Display this help and exit
-    --auto-close               Enable auto-closing of the session
+    --auto-close               Enable auto-closing of the session (if no connection in 120s, the session will be closed automatically.)
 EOF
 }
 
